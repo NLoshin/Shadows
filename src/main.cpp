@@ -23,8 +23,9 @@ struct position {uint8_t x; uint8_t y;};
 
 // Structure for scenes
 struct sceneStruct {
-  unsigned long startTime;
-  unsigned long endTime;
+  unsigned int startTime;
+  unsigned int endTime;
+  uint8_t Rad;
   position start; // X, Y
   position end;   // X, Y
   int noise[3];   // Rad, freq, count
@@ -43,28 +44,33 @@ class sceneClass {
   uint8_t id = 0;
 
   // Function for shadow moving
-  position newPos(sceneStruct scene) {
-    float x = scene.coefX * (millis() - scene.startTime) + scene.start.x;
-    float y = scene.coefY * (millis() - scene.startTime) + scene.start.y;
-    if (x != int(x)) {
-      int color = round(x * 100) % 100;
-      color = color / 100.0 * 255;
-      matrix.drawPixel(int(x)+1, int(y), matrix.Color(color, color, color));
-    }
-    if (y != int(y)) {
-      int color = round(y * 100) % 100;
-      color = color / 100.0 * 255;
-      matrix.drawPixel(int(x), int(y)+1, matrix.Color(color, color, color));
-    }
-
-    if (x != int(x) && y != int(y)) {
-      int color = (round(x * 100) + round(y * 100)) / 2 % 100;
-      color = color / 100.0 * 255;
-      matrix.drawPixel(int(x), int(y), matrix.Color(255-color, 255-color, 255-color));
-      matrix.drawPixel(int(x)+1, int(y)+1, matrix.Color(color, color, color));
-    }
-    else matrix.drawPixel(int(x), int(y), matrix.Color(255, 255, 255));
-    return {x, y};
+  position mainMove(sceneStruct scene) {
+    float x; float y;
+    do {
+      x = scene.coefX * (millis() - scene.startTime) + scene.start.x;
+      y = scene.coefY * (millis() - scene.startTime) + scene.start.y;
+      if (x != int(x) && y != int(y)) {
+        int color = (round(x * 100) + round(y * 100)) / 2 % 100;
+        color = color / 100.0 * 255;
+        matrix.fillCircle(int(x)+1, int(y)+1, scene.Rad, matrix.Color(color, color, color));
+        matrix.fillCircle(int(x), int(y),     scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+      }
+      else if (x != int(x)) {
+        int color = round(x * 100) % 100;
+        color = color / 100.0 * 255;
+        matrix.fillCircle(int(x)+1, int(y), scene.Rad, matrix.Color(color, color, color));
+        matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+      }
+      else if (y != int(y)) {
+        int color = round(y * 100) % 100;
+        color = color / 100.0 * 255;
+        matrix.fillCircle(int(x), int(y)+1, scene.Rad, matrix.Color(color, color, color));
+        matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+      }
+      else matrix.fillCircle(int(x), int(y), scene.Rad, matrix.Color(255, 255, 255));
+      Serial.print(x);
+      Serial.print('\t');
+      Serial.println(y);
   }
 
   // Function for display the storm 
