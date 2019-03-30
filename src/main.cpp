@@ -29,6 +29,8 @@ struct sceneStruct {
   position start; // X, Y
   position end;   // X, Y
   int noise[3];   // Rad, freq, count
+  uint8_t pixels[5][2];
+  bool fill;
   unsigned long time;
   float coefX;
   float coefY;
@@ -74,6 +76,8 @@ class sceneClass {
       Serial.print(x);
       Serial.print('\t');
       Serial.println(y);
+    } while (x > W && y > H);  // FIXME: 400000 pos
+      return {x, y};
   }
 
   // Function for display the storm 
@@ -91,6 +95,15 @@ class sceneClass {
       i++;
     }
   }
+
+  // Function for display array of pixels
+  void fills(sceneStruct scene) {
+    for (uint8_t i; i < sizeof(scene.pixels); i++) {
+      uint8_t color = (scene.endTime - millis()) * scenes[i].coefTime;
+      Serial.println(color);
+      matrix.drawPixel(scene.pixels[i][0], scene.pixels[i][1], matrix.Color(color, color, color));
+      if (scene.fill) matrix.fillScreen(matrix.Color(color, color, color));
+      Serial.println(i);
     }
   }
 
@@ -102,6 +115,7 @@ class sceneClass {
   void init(sceneStruct sceneConfig[sceneCount]) {
     for(int i; i<sceneCount; i++) {
       scenes[i] = sceneConfig[i];
+      scenes[i].time = scenes[i].endTime - scenes[i].startTime;
       if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
       if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
       scenes[i].startTime = scenes[i].startTime + millis();
@@ -115,7 +129,10 @@ class sceneClass {
 
   // Function for update matrix
   void update() {
+    matrix.clear();
     mainMove(scenes[id]);
+    noise (scenes[id]);
+    fills (scenes[id]);
     matrix.show();
     if (long(millis() - scenes[id].endTime) > 0) id++;
   }
@@ -135,11 +152,12 @@ void setup() {
   matrix.show();
 
   sceneStruct sceneConfig[3] = { 
-  //StartT ,EndT,  X0,Y0,   X1,Y1,   R,freq,count
-    {1000, 15000,  {4, 4},  {20, 8}, {3, 500, 4}},
-    {15000, 40000, {20, 8}, {3, 3},  {3, 500, 4}},
-    {40000, 50000, {20, 8}, {3, 3},  {3, 500, 4}}
-  };
+  //StartT ,EndT,  X0,Y0,   X1,Y1,  R,freq,count
+    {1000, 5000,   1, {4, 4}, {8, 8},  {3, 500, 2}, {{0, 0}, {0, 1}, {0, 2}}, true},
+    {5000, 10000 , 1, {8, 8}, {8, 2},  {3, 500, 2}, true},
+    {10000, 50000, 1, {8, 2}, {0, 2},  {3, 500, 2}, true}
+  };                         
+  Serial.println("Init");                                                                                                                                                                                           
   scenes.init(sceneConfig);
 
   ////// AUDIO MODEL SETUP //////
