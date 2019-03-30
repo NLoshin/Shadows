@@ -29,9 +29,12 @@ struct sceneStruct {
   position start; // X, Y
   position end;   // X, Y
   int noise[3];   // Rad, freq, count
+  unsigned long time;
   float coefX;
   float coefY;
   float coefNoise;
+  float coefPixels;
+  float coefTime;
 };
 
 // Class for work with matrix and motors
@@ -74,16 +77,20 @@ class sceneClass {
   }
 
   // Function for display the storm 
-  void noise(int id, sceneStruct scene) { 
+  void noise(sceneStruct scene) { 
     uint8_t i;
-    position xy = newPos(scene);
+    position xy = mainMove(scene);
     uint8_t color = millis() % scene.noise[2] * scene.coefNoise;
     while (i < scene.noise[2]) {
       uint8_t a; uint8_t b;
       do { 
         a = random(H); b = random(W);
-      } while ((pow(xy.x - a, 2) + pow(xy.y - b, 2)) > scene.noise[0]);
-      matrix.drawPixel(int(a), int(b), matrix.Color(color, color, color));
+      } while (false);
+      // } while ((pow(xy.x - a, 2) + pow(xy.y - b, 2)) > scene.noise[0]); //  TODO: THis shit
+      matrix.drawPixel(a, b, matrix.Color(color, color, color));
+      i++;
+    }
+  }
     }
   }
 
@@ -99,15 +106,16 @@ class sceneClass {
       if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
       scenes[i].startTime = scenes[i].startTime + millis();
       scenes[i].endTime   = scenes[i].endTime   + millis();
-      scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / (scenes[i].endTime - scenes[i].startTime);
-      scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / (scenes[i].endTime - scenes[i].startTime);
-      scenes[i].coefNoise = scenes[i].noise[1] / 255;
+      scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
+      scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
+      scenes[i].coefNoise  = scenes[i].noise[1] / 255;
+      scenes[i].coefTime = scenes[i].time / 255;
     }
   }
 
   // Function for update matrix
   void update() {
-    newPos(scenes[id]);
+    mainMove(scenes[id]);
     matrix.show();
     if (long(millis() - scenes[id].endTime) > 0) id++;
   }
