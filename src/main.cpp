@@ -7,7 +7,7 @@
 // Define Matrix Parameters
 #define W 30
 #define H 10
-#define PIN 2
+#define PIN 10
 
 // Matrix initialization with AdaFruit NeoMatrix
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, PIN, 
@@ -29,7 +29,6 @@ struct sceneStruct {
   position start; // X, Y
   position end;   // X, Y
   int noise[3];   // Rad, freq, count
-  uint8_t pixels[5][2];
   bool fill;
   unsigned long time;
   float coefX;
@@ -57,20 +56,38 @@ class sceneClass {
       if (x != int(x) && y != int(y)) {
         int color = (round(x * 100) + round(y * 100)) / 2 % 100;
         color = color / 100.0 * 255;
-        matrix.fillCircle(int(x)+1, int(y)+1, scene.Rad, matrix.Color(color, color, color));
-        matrix.fillCircle(int(x), int(y),     scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        if (color < 125) {
+          matrix.fillCircle(int(x)+1, int(y)+1, scene.Rad, matrix.Color(color, color, color));
+          matrix.fillCircle(int(x), int(y),     scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        }
+        else {
+          matrix.fillCircle(int(x), int(y),     scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+          matrix.fillCircle(int(x)+1, int(y)+1, scene.Rad, matrix.Color(color, color, color));
+        }
       }
       else if (x != int(x)) {
         int color = round(x * 100) % 100;
         color = color / 100.0 * 255;
-        matrix.fillCircle(int(x)+1, int(y), scene.Rad, matrix.Color(color, color, color));
-        matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        if (color < 125) {
+          matrix.fillCircle(int(x)+1, int(y), scene.Rad, matrix.Color(color, color, color));
+          matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        }
+        else {
+          matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+          matrix.fillCircle(int(x)+1, int(y), scene.Rad, matrix.Color(color, color, color));
+        }
       }
       else if (y != int(y)) {
         int color = round(y * 100) % 100;
         color = color / 100.0 * 255;
-        matrix.fillCircle(int(x), int(y)+1, scene.Rad, matrix.Color(color, color, color));
-        matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        if (color < 125) {
+          matrix.fillCircle(int(x), int(y)+1, scene.Rad, matrix.Color(color, color, color));
+          matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+        }
+        else {
+          matrix.fillCircle(int(x), int(y),   scene.Rad, matrix.Color(255-color, 255-color, 255-color));
+          matrix.fillCircle(int(x), int(y)+1, scene.Rad, matrix.Color(color, color, color));
+        }
       }
       else matrix.fillCircle(int(x), int(y), scene.Rad, matrix.Color(255, 255, 255));
       Serial.print(x);
@@ -130,9 +147,8 @@ class sceneClass {
   // Function for update matrix
   void update() {
     matrix.clear();
-    mainMove(scenes[id]);
     noise (scenes[id]);
-    fills (scenes[id]);
+    // fills (scenes[id]);
     matrix.show();
     if (long(millis() - scenes[id].endTime) > 0) id++;
   }
@@ -145,6 +161,7 @@ class sceneClass {
 sceneClass scenes;
 void setup() {
   delay(5000);
+  delay(3000);
   ////// DISPLAY SETUP //////
   matrix.begin();
   matrix.clear();
@@ -153,17 +170,19 @@ void setup() {
 
   sceneStruct sceneConfig[3] = { 
   //StartT ,EndT,  X0,Y0,   X1,Y1,  R,freq,count
-    {1000, 5000,   1, {4, 4}, {8, 8},  {3, 500, 2}, {{0, 0}, {0, 1}, {0, 2}}, true},
-    {5000, 10000 , 1, {8, 8}, {8, 2},  {3, 500, 2}, true},
-    {10000, 50000, 1, {8, 2}, {0, 2},  {3, 500, 2}, true}
+  //StartT ,EndT,  R, X0,Y0,   X1,Y1,  R,freq,count
+    {1000, 5000,   2, {4, 4}, {8, 8},  {3, 2000, 2}, true},
+    {5000, 10000 , 2, {8, 8}, {8, 2},  {3, 500, 2}, true},
+    {10000, 30000, 2, {8, 2}, {0, 2},  {3, 500, 2}, true}
   };                         
   Serial.println("Init");                                                                                                                                                                                           
   scenes.init(sceneConfig);
 
   ////// AUDIO MODEL SETUP //////
   Serial1.begin(115200);
-  player.volume(10);
-  player.play();
+  // Serial1.begin(115200);
+  // player.volume(10);
+  // player.play();
 }
 
 void loop() {
