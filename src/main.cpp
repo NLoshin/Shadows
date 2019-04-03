@@ -97,15 +97,21 @@ class sceneClass {
       return {x, y};
   }
 
-  // Function for display the storm 
+  // Function for display the storm
   void noise(sceneStruct scene) { 
-    uint8_t i;
+    uint8_t i=0;
     position xy = mainMove(scene);
-    uint8_t color = millis() % scene.noise[2] * scene.coefNoise;
+    uint8_t color = millis() % scene.noise[1] * scene.coefNoise;
     while (i < scene.noise[2]) {
       uint8_t a; uint8_t b;
       do { 
-        a = random(H); b = random(W);
+        a = random(W); b = random(H);
+        Serial.print('N');
+        Serial.print(a);
+        Serial.print('\t');
+        Serial.print(b);
+        Serial.print('\t');
+        Serial.println(color);
       } while (false);
       // } while ((pow(xy.x - a, 2) + pow(xy.y - b, 2)) > scene.noise[0]); //  TODO: THis shit
       matrix.drawPixel(a, b, matrix.Color(color, color, color));
@@ -169,7 +175,6 @@ void setup() {
   matrix.show();
 
   sceneStruct sceneConfig[3] = { 
-  //StartT ,EndT,  X0,Y0,   X1,Y1,  R,freq,count
   //StartT ,EndT,  R, X0,Y0,   X1,Y1,  R,freq,count
     {1000, 5000,   2, {4, 4}, {8, 8},  {3, 2000, 2}, true},
     {5000, 10000 , 2, {8, 8}, {8, 2},  {3, 500, 2}, true},
