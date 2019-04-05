@@ -3,6 +3,7 @@
 #include "SPI.h"
 #include "Adafruit_NeoMatrix.h"
 #include "DFRobotDFPlayerMini.h"
+#include "matrixFunctions.h"
 
 // Define Matrix Parameters
 #define W 30
