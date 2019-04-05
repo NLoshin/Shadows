@@ -102,7 +102,6 @@ class sceneClass {
   void noise(sceneStruct scene) { 
     uint8_t i=0;
     position xy = mainMove(scene);
-    uint8_t color = millis() % scene.noise[1] * scene.coefNoise;
     while (i < scene.noise[2]) {
       uint8_t a; uint8_t b;
       do { 
@@ -110,12 +109,10 @@ class sceneClass {
         Serial.print('N');
         Serial.print(a);
         Serial.print('\t');
-        Serial.print(b);
-        Serial.print('\t');
-        Serial.println(color);
+        Serial.println(b);
       } while (false);
       // } while ((pow(xy.x - a, 2) + pow(xy.y - b, 2)) > scene.noise[0]); //  TODO: THis shit
-      matrix.drawPixel(a, b, matrix.Color(color, color, color));
+      matrix.drawPixel(a, b, matrix.Color(120, 120, 120));
       i++;
     }
   }
@@ -146,8 +143,7 @@ class sceneClass {
       scenes[i].endTime   = scenes[i].endTime   + millis();
       scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
       scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
-      scenes[i].coefNoise  = scenes[i].noise[1] / 255;
-      scenes[i].coefTime = scenes[i].time / 255;
+      scenes[i].coefTime   = 1.0 * scenes[i].time / 255;
     }
   }
 
@@ -180,6 +176,10 @@ void setup() {
     {1000, 5000,   2, {4, 4}, {8, 8},  {3, 2000, 2}, true},
     {5000, 10000 , 2, {8, 8}, {8, 2},  {3, 500, 2}, true},
     {10000, 30000, 2, {8, 2}, {0, 2},  {3, 500, 2}, true}
+    {1000, 5000,   0, {0,0}, {0,0},  {0,0,0}, true},
+    {5000, 15000,   2, {4, 4}, {8, 8},  {3, 2000, 2}, false},
+    {15000, 20000 , 2, {8, 8}, {8, 2},  {3, 500, 2}, false},
+    {20000, 50000, 2, {8, 2}, {0, 2},  {3, 500, 2}, false}
   };                         
   Serial.println("Init");                                                                                                                                                                                           
   scenes.init(sceneConfig);
