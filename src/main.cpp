@@ -130,6 +130,17 @@ class sceneClass {
    matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
   }
 
+  // Function for vertical gradient matrix
+  void Vgradient(unsigned int colors[2][3]) {
+    for(uint8_t h = 0; h <= H; h++) {
+      uint8_t R = colors[0][0] + (colors[1][0] - colors[0][0]) * 1.0 * h/H;
+      uint8_t G = colors[0][1] + (colors[1][1] - colors[0][1]) * 1.0 * h/H;
+      uint8_t B = colors[0][2] + (colors[1][2] - colors[0][2]) * 1.0 * h/H;
+      for(uint8_t w = 0; w <= W; w++) {
+        matrix.drawPixel(w, h, matrix.Color(R, G, B));
+    }
+   }
+  }
 
   // MAIN CODE===============
   public:
@@ -162,11 +173,11 @@ class sceneClass {
         break;
       case 2:
         unsigned int colors2[2][3] = {{0, 0, 0}, {255, 0, 0}};
-        Hgradient(colors2);
+        Vgradient(colors2);
         break;
       case 3:
         unsigned int colors3[2][3] = {{0, 0, 0}, {255, 160, 0}};
-        Hgradient(colors3);
+        Vgradient(colors3);
         noise(scenes[id]);
         matrix.fillCircle(14, 4, 2, matrix.Color(255, 40, 0));
         break;
