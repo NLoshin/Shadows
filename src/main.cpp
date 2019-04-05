@@ -123,6 +123,11 @@ class sceneClass {
       matrix.drawPixel(29, h, matrix.Color(255, 255, 255));
     }  
   }
+
+  // Function for display circles in bottom angles
+  void angles() {
+   matrix.fillCircle(0,  9, 3, matrix.Color(255, 255, 255));
+   matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
   }
 
 
