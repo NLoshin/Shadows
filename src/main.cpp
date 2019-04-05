@@ -151,8 +151,9 @@ class sceneClass {
       scenes[i] = sceneConfig[i];
       if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
       if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
-      scenes[i].startTime = scenes[i].startTime + millis();
-      scenes[i].endTime   = scenes[i].endTime   + millis();
+      int time = millis(); 
+      scenes[i].startTime = scenes[i].startTime + time;
+      scenes[i].endTime   = scenes[i].endTime   + time;
       scenes[i].time = scenes[i].endTime - scenes[i].startTime;
       scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
       scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
