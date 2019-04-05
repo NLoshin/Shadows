@@ -104,14 +104,13 @@ class sceneClass {
     }
   }
 
-  // Function for display array of pixels
-  void fills(sceneStruct scene) {
-    for (uint8_t i; i < sizeof(scene.pixels); i++) {
-      uint8_t color = (scene.endTime - millis()) * scenes[i].coefTime;
-      Serial.println(color);
-      matrix.drawPixel(scene.pixels[i][0], scene.pixels[i][1], matrix.Color(color, color, color));
-      if (scene.fill) matrix.fillScreen(matrix.Color(color, color, color));
-      Serial.println(i);
+  // Function for fill screen
+  void fill(sceneStruct scene) {
+    matrix.clear();
+    uint8_t color = (millis() - scene.startTime) / scene.coefTime + 50;
+    if (millis() - scene.startTime > scene.time/2) color = 255 - color - 100;
+    matrix.fillScreen(matrix.Color(color, color, color));
+  }
     }
   }
 
