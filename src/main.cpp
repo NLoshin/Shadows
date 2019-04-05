@@ -3,12 +3,12 @@
 #include "SPI.h"
 #include "Adafruit_NeoMatrix.h"
 #include "DFRobotDFPlayerMini.h"
-#include "matrixFunctions.h"
 
 // Define Matrix Parameters
 #define W 30
 #define H 10
 #define PIN 10
+#define sceneCount 9
 
 // Matrix initialization with AdaFruit NeoMatrix
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, PIN, 
