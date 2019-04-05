@@ -136,11 +136,54 @@ class sceneClass {
 
   // Function for update matrix
   void update() {
-    matrix.clear();
-    noise (scenes[id]);
-    // fills (scenes[id]);
-    matrix.show();
-    if (long(millis() - scenes[id].endTime) > 0) id++;
+    switch (id)
+    {
+      case 0:
+        fill(scenes[0]);
+        break;
+      case 1:
+        moveCircle(scenes[1]);
+        noise(scenes[1]);
+        break;
+      case 2:
+        unsigned int colors2[2][3] = {{0, 0, 0}, {255, 0, 0}};
+        Hgradient(colors2);
+        break;
+      case 3:
+        unsigned int colors3[2][3] = {{0, 0, 0}, {255, 160, 0}};
+        Hgradient(colors3);
+        noise(scenes[id]);
+        matrix.fillCircle(14, 4, 2, matrix.Color(255, 40, 0));
+        break;
+      case 4:
+        noise(scenes[id]);
+        angles();
+        break;
+      case 5:
+        noise(scenes[id]);
+        angles();
+        break;
+      case 6:
+        noise(scenes[id]);
+        angles();
+        matrix.fillCircle(14, 4, 2, matrix.Color(255, 255, 0));
+        break;
+      case 7:
+        /* code */
+        break;
+      case 8:
+        /* code */
+        break;
+    
+      default:
+        break;
+    }
+    Serial.print("Update:\t");
+    Serial.println(id);
+    if (long(millis() - scenes[id].endTime) > 0) {
+      id++;
+      // player.next();
+    }
   }
 };
 
