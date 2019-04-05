@@ -26,11 +26,14 @@ struct position {uint8_t x; uint8_t y;};
 struct sceneStruct {
   unsigned long startTime;
   unsigned long endTime;
-  int noise[3];   // Rad, freq, count
+  uint8_t protect;
+  uint8_t noiseCount;
+  uint8_t singlePixPos[3];
+  uint8_t singlePixColor[3];
   uint8_t Rad;
   position start; // X, Y
   position end;   // X, Y
-  bool fill;
+  // Automatic variables
   unsigned long time;
   float coefX;
   float coefY;
@@ -95,10 +98,9 @@ class sceneClass {
   // Function for display the storm
   void noise(sceneStruct scene) { 
     uint8_t i=0;
-    while (i < scene.noise[2]) {
+    while (i < scene.noiseCount) {
       uint8_t a; uint8_t b;
       a = random(W); b = random(H);
-      // } while ((pow(xy.x - a, 2) + pow(xy.y - b, 2)) > scene.noise[0]); //  TODO: THis shit
       matrix.drawPixel(a, b, matrix.Color(120, 120, 120));
       i++;
     }
@@ -144,7 +146,6 @@ class sceneClass {
 
   // MAIN CODE===============
   public:
-  // Scene count value
   // Initializate classes function
   void init(sceneStruct sceneConfig[sceneCount]) {
     for(int i; i<sceneCount; i++) {
@@ -158,53 +159,21 @@ class sceneClass {
       scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
       scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
       scenes[i].coefTime = 1.0 * scenes[i].time / 255;
+      scenes[i].singlePixColor[0] = matrix.Color(scenes[i].singlePixColor[0], scenes[i].singlePixColor[1], scenes[i].singlePixColor[2]);
     }
   }
 
   // Function for update matrix
   void update() {
-    switch (id)
-    {
-      case 0:
-        fill(scenes[0]);
-        break;
-      case 1:
-        moveCircle(scenes[1]);
-        noise(scenes[1]);
-        break;
-      case 2:
-        unsigned int colors2[2][3] = {{0, 0, 0}, {255, 0, 0}};
-        Vgradient(colors2);
-        break;
-      case 3:
-        unsigned int colors3[2][3] = {{0, 0, 0}, {255, 160, 0}};
-        Vgradient(colors3);
-        noise(scenes[id]);
-        matrix.fillCircle(14, 4, 2, matrix.Color(255, 40, 0));
-        break;
-      case 4:
-        noise(scenes[id]);
-        angles();
-        break;
-      case 5:
-        noise(scenes[id]);
-        angles();
-        break;
-      case 6:
-        noise(scenes[id]);
-        angles();
-        matrix.fillCircle(14, 4, 2, matrix.Color(255, 255, 0));
-        break;
-      case 7:
-        /* code */
-        break;
-      case 8:
-        /* code */
-        break;
-    
-      default:
-        break;
-    }
+    unsigned int colors[2][3] = {{0, 0, 0}, {255, 0, 0}};
+    if bitRead(scenes[id].protect, 0) Vgradient(colors);
+    if bitRead(scenes[id].protect, 1) angles();
+    if bitRead(scenes[id].protect, 2) circuit();
+    if bitRead(scenes[id].protect, 3) fill(scenes[id]);
+    if bitRead(scenes[id].protect, 4) noise(scenes[id]);
+    if bitRead(scenes[id].protect, 5) moveCircle(scenes[id]);
+    matrix.fillCircle(scenes[id].singlePixPos[0], scenes[id].singlePixPos[1], scenes[id].singlePixPos[2], scenes[id].singlePixColor[0]);
+
     Serial.print("Update:\t");
     Serial.println(id);
     if (long(millis() - scenes[id].endTime) > 0) {
@@ -228,20 +197,19 @@ void setup() {
   matrix.setBrightness(100);
   matrix.show();
 
-  sceneStruct sceneConfig[sceneCount] = { 
-  //StartT ,EndT,  R, X0,Y0,   X1,Y1,  R,freq,count
-    {0,     3000},
-    {3000,  6000,  {3, 2000, 2}, 2, {0, 4}, {29, 4}},
+  sceneStruct sceneConfig[sceneCount] = {
+    {0,     3000,  0b001000},
+    {3000,  6000,  0b110000, 3, {}, {}, 2, {0, 4}, {29, 4}},
 
-    {6000, 9000,   {3, 2000, 2}},
-    {9000, 12000,  {3, 2000, 2}},
+    {6000,  9000,  0b000001},
+    {9000,  12000, 0b010001, 3, {14, 4, 1}, {255, 50, 0}},
 
-    {12000, 15000, {3, 2000, 2}},
-    {15000, 18000, {3, 2000, 2}},
-    {18000, 21000, {3, 2000, 2}},
+    {12000, 15000, 0b010010, 3},
+    {15000, 18000, 0b010010, 3},
+    {18000, 21000, 0b010010, 3, {14, 4, 1}, {255, 255, 0}},
 
-    {21000, 24000, {3, 2000, 2}},
-    {24000, 27000, {3, 2000, 2}}
+    {21000, 24000, 0b00000, 3},
+    {24000, 27000, 0b01000, 3}
   };                                                                                                                                                                                                               
   scenes.init(sceneConfig);
 
