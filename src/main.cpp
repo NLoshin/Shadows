@@ -111,7 +111,18 @@ class sceneClass {
     if (millis() - scene.startTime > scene.time/2) color = 255 - color - 100;
     matrix.fillScreen(matrix.Color(color, color, color));
   }
+
+  // Function for circuit matrix
+  void circuit() {
+    for(uint8_t w=0;w<30;w++) {
+      matrix.drawPixel(w,  0, matrix.Color(255, 255, 255));
+      matrix.drawPixel(w,  9, matrix.Color(255, 255, 255));
     }
+    for(uint8_t h=0;h<10;h++) {
+      matrix.drawPixel(0,  h, matrix.Color(255, 255, 255));
+      matrix.drawPixel(29, h, matrix.Color(255, 255, 255));
+    }  
+  }
   }
 
 
