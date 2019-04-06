@@ -48,6 +48,18 @@ class sceneClass {
   // PRIVATE VARIABLES=======
   sceneStruct scenes[sceneCount] = {};
   uint8_t id = 0;
+  const long shadowsText[10] = {
+    0b111101001001100110001111010001,
+    0b100001001010010101001001010001,
+    0b100001001010010100101001010001,
+    0b100001001010010100101001010101,
+    0b111101111011110100101001010101,
+    0b111101111011110100101001010101,
+    0b000101001010010100101001010101,
+    0b000101001010010100101001010101,
+    0b000101001010010101001001010101,
+    0b111101001010010110001111011111
+  }; 
 
   // Function for shadow moving
   void moveCircle(sceneStruct scene) {
@@ -161,6 +173,18 @@ class sceneClass {
       scenes[i].coefY = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
       scenes[i].coefTime = 1.0 * scenes[i].time / 255;
       scenes[i].singlePixColor[0] = matrix.Color(scenes[i].singlePixColor[0], scenes[i].singlePixColor[1], scenes[i].singlePixColor[2]);
+    }
+  }
+
+  // Function for display rainbow text
+  void rainbowText() {
+    for (int column =0; column < 10; column++) {
+      for (int row =0; row < 30; row++) {
+        if (bitRead(shadowsText[column], 29-row)) {
+          if (row <=15) matrix.drawPixel(row, column, matrix.Color(255-row*17, row*17, 0));
+          else matrix.drawPixel(row, column, matrix.Color(0,255- row*17, row*17));
+        }
+      }
     }
   }
 
