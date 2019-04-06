@@ -28,8 +28,8 @@ struct sceneStruct {
   unsigned long endTime;
   uint8_t protect;
   uint8_t noiseCount;
-  uint8_t singlePixPos[3];
-  uint8_t singlePixColor[3];
+  unsigned int singlePixPos[3];
+  unsigned int singlePixColor[3];
   uint8_t Rad;
   position start; // X, Y
   position end;   // X, Y
@@ -129,7 +129,7 @@ class sceneClass {
   // Function for display circles in bottom angles
   void angles() {
    matrix.fillCircle(0,  9, 3, matrix.Color(255, 255, 255));
-   matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
+   if (id != sceneCount-1) matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
   }
 
   // Function for vertical gradient matrix
@@ -138,10 +138,11 @@ class sceneClass {
       uint8_t R = colors[0][0] + (colors[1][0] - colors[0][0]) * 1.0 * h/H;
       uint8_t G = colors[0][1] + (colors[1][1] - colors[0][1]) * 1.0 * h/H;
       uint8_t B = colors[0][2] + (colors[1][2] - colors[0][2]) * 1.0 * h/H;
+      uint16_t color = matrix.Color(R, G, B);
       for(uint8_t w = 0; w <= W; w++) {
         matrix.drawPixel(w, h, matrix.Color(R, G, B));
+      }
     }
-   }
   }
 
   // MAIN CODE===============
@@ -165,8 +166,7 @@ class sceneClass {
 
   // Function for update matrix
   void update() {
-    unsigned int colors[2][3] = {{0, 0, 0}, {255, 0, 0}};
-    if bitRead(scenes[id].protect, 0) Vgradient(colors);
+    if bitRead(scenes[id].protect, 0) Vgradient(scenes[id].colors);
     if bitRead(scenes[id].protect, 1) angles();
     if bitRead(scenes[id].protect, 2) circuit();
     if bitRead(scenes[id].protect, 3) fill(scenes[id]);
@@ -178,6 +178,9 @@ class sceneClass {
     Serial.println(id);
     if (long(millis() - scenes[id].endTime) > 0) {
       id++;
+      matrix.clear();
+      matrix.show();
+      delay(3000);
       // player.next();
     }
   }
@@ -196,20 +199,19 @@ void setup() {
   matrix.clear();
   matrix.setBrightness(100);
   matrix.show();
-
   sceneStruct sceneConfig[sceneCount] = {
-    {0,     3000,  0b001000},
-    {3000,  6000,  0b110000, 3, {}, {}, 2, {0, 4}, {29, 4}},
+    {0,  20,   0b001000},
+    {23, 31,   0b110000, {}, 3, {}, {}, 2, {0, 4}, {29, 4}},
 
-    {6000,  9000,  0b000001},
-    {9000,  12000, 0b010001, 3, {14, 4, 1}, {255, 50, 0}},
+    {34, 49,   0b000001, {{0, 0, 0}, {255, 0, 0}}},
+    {52, 57,   0b010001, {{0, 0, 0}, {255, 0, 0}}, 3, {14, 4, 1}, {255, 50, 0}},
 
-    {12000, 15000, 0b010010, 3},
-    {15000, 18000, 0b010010, 3},
-    {18000, 21000, 0b010010, 3, {14, 4, 1}, {255, 255, 0}},
+    {60, 62,   0b010010, {},3},
+    {65, 69,   0b010010, {}, 3},
+    {72, 75,   0b010010, {}, 3, {14, 4, 1}, {255, 255, 0}},
 
-    {21000, 24000, 0b00000, 3},
-    {24000, 27000, 0b01000, 3}
+    {78, 101,  0b000000},
+    {104, 120, 0b010010, {}, 3}
   };                                                                                                                                                                                                               
   scenes.init(sceneConfig);
 
