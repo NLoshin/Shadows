@@ -7,17 +7,18 @@
 // Define Matrix Parameters
 #define W 30
 #define H 10
-#define PIN 10
-#define sceneCount 9
+#define MATRIXPIN 10
+#define SCENECOUNT 9
 
 // Matrix initialization with AdaFruit NeoMatrix
-Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, PIN, 
+Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, MATRIXPIN, 
   NEO_MATRIX_TOP + NEO_MATRIX_LEFT +
   NEO_MATRIX_ROWS + NEO_MATRIX_PROGRESSIVE,
   NEO_GRB + NEO_KHZ800);
 
 // Audio Player initialization with DFRobotPlayer
-DFRobotDFPlayerMini player;
+// DFRobotDFPlayerMini player;
+// SoftwareSerial mySerial(4, 5); //RX, TX
 
 // Structure for position variables
 struct position {uint8_t x; uint8_t y;};
@@ -27,6 +28,7 @@ struct sceneStruct {
   unsigned long startTime;
   unsigned long endTime;
   uint8_t protect;
+  unsigned int colors[3][3];
   uint8_t noiseCount;
   unsigned int singlePixPos[3];
   unsigned int singlePixColor[3];
@@ -46,8 +48,9 @@ struct sceneStruct {
 class sceneClass {
   private:
   // PRIVATE VARIABLES=======
-  sceneStruct scenes[sceneCount] = {};
+  sceneStruct scenes[SCENECOUNT] = {};
   uint8_t id = 0;
+
   const long shadowsText[10] = {
     0b111101001001100110001111010001,
     0b100001001010010101001001010001,
@@ -61,7 +64,7 @@ class sceneClass {
     0b111101001010010110001111011111
   }; 
 
-  // Function for shadow moving
+  // Function for move circle
   void moveCircle(sceneStruct scene) {
     float x; float y;
     do {
@@ -104,11 +107,11 @@ class sceneClass {
         }
       }
       else matrix.fillCircle(int(x), int(y), scene.Rad, matrix.Color(255, 255, 255));
-    } while (x > W && y > H);  // FIXME: 400000 pos
+    } while (x > W && y > H);  // FIX: 400000 pos
   }
 
   // Function for display the storm
-  void noise(sceneStruct scene) { 
+  void storm(sceneStruct scene) { 
     uint8_t i=0;
     while (i < scene.noiseCount) {
       uint8_t a; uint8_t b;
@@ -141,15 +144,15 @@ class sceneClass {
   // Function for display circles in bottom angles
   void angles() {
    matrix.fillCircle(0,  9, 3, matrix.Color(255, 255, 255));
-   if (id != sceneCount-1) matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
+   if (id != SCENECOUNT-1) matrix.fillCircle(29, 9, 3, matrix.Color(255, 255, 255));
   }
 
   // Function for vertical gradient matrix
-  void Vgradient(unsigned int colors[2][3]) {
+  void Vgradient(sceneStruct scene) {
     for(uint8_t h = 0; h <= H; h++) {
-      uint8_t R = colors[0][0] + (colors[1][0] - colors[0][0]) * 1.0 * h/H;
-      uint8_t G = colors[0][1] + (colors[1][1] - colors[0][1]) * 1.0 * h/H;
-      uint8_t B = colors[0][2] + (colors[1][2] - colors[0][2]) * 1.0 * h/H;
+      uint8_t R = scene.colors[0][0] + (scene.colors[1][0] - scene.colors[0][0]) * 1.0 * h/H * (millis() - scene.startTime) / scene.coefTime;
+      uint8_t G = scene.colors[0][1] + (scene.colors[1][1] - scene.colors[0][1]) * 1.0 * h/H * (millis() - scene.startTime) / scene.coefTime;
+      uint8_t B = scene.colors[0][2] + (scene.colors[1][2] - scene.colors[0][2]) * 1.0 * h/H * (millis() - scene.startTime) / scene.coefTime;
       uint16_t color = matrix.Color(R, G, B);
       for(uint8_t w = 0; w <= W; w++) {
         matrix.drawPixel(w, h, matrix.Color(R, G, B));
@@ -157,11 +160,22 @@ class sceneClass {
     }
   }
 
+  // Function for triple horizontal gradient
+  void H3gradient(sceneStruct scene) {
+    for (int column =0; column < 10; column++) {
+      for (int row =0; row < 30; row++) {
+        float timeCoef = (millis() - scene.startTime) / scene.coefTime;
+        if (row <=15) matrix.drawPixel(row, column, matrix.Color((255-row*17)*timeCoef, 0, 0)); // CHECK: *timeCoef
+        else matrix.drawPixel(row, column, matrix.Color((row*17)*timeCoef, 0, 0));
+      }
+    }
+  }
+
   // MAIN CODE===============
   public:
-  // Initializate classes function
-  void init(sceneStruct sceneConfig[sceneCount]) {
-    for(int i; i<sceneCount; i++) {
+  // Initializate scene structures
+  void init(sceneStruct sceneConfig[SCENECOUNT]) {
+    for(int i; i<SCENECOUNT; i++) {
       scenes[i] = sceneConfig[i];
       if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
       if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
@@ -176,13 +190,13 @@ class sceneClass {
     }
   }
 
-  // Function for display rainbow text
+  // Function for display rainbow "SHADOWS" text
   void rainbowText() {
     for (int column =0; column < 10; column++) {
       for (int row =0; row < 30; row++) {
         if (bitRead(shadowsText[column], 29-row)) {
           if (row <=15) matrix.drawPixel(row, column, matrix.Color(255-row*17, row*17, 0));
-          else matrix.drawPixel(row, column, matrix.Color(0,255- row*17, row*17));
+          else          matrix.drawPixel(row, column, matrix.Color(0, 255-row*17, row*17));
         }
       }
     }
@@ -190,12 +204,13 @@ class sceneClass {
 
   // Function for update matrix
   void update() {
-    if bitRead(scenes[id].protect, 0) Vgradient(scenes[id].colors);
-    if bitRead(scenes[id].protect, 1) angles();
-    if bitRead(scenes[id].protect, 2) circuit();
-    if bitRead(scenes[id].protect, 3) fill(scenes[id]);
-    if bitRead(scenes[id].protect, 4) noise(scenes[id]);
-    if bitRead(scenes[id].protect, 5) moveCircle(scenes[id]);
+    if bitRead(scenes[id].protect, 0) H3gradient(scenes[id]);
+    if bitRead(scenes[id].protect, 1) Vgradient(scenes[id]);
+    if bitRead(scenes[id].protect, 2) angles();
+    if bitRead(scenes[id].protect, 3) fill(scenes[id]);//circuit();
+    if bitRead(scenes[id].protect, 4) fill(scenes[id]);
+    if bitRead(scenes[id].protect, 5) storm(scenes[id]);
+    if bitRead(scenes[id].protect, 6) moveCircle(scenes[id]);
     matrix.fillCircle(scenes[id].singlePixPos[0], scenes[id].singlePixPos[1], scenes[id].singlePixPos[2], scenes[id].singlePixColor[0]);
 
     Serial.print("Update:\t");
@@ -216,28 +231,30 @@ class sceneClass {
 
 sceneClass scenes;
 void setup() {
-  delay(3000);
+  delay(5000);
   Serial.begin(9600);
   ////// DISPLAY SETUP //////
   matrix.begin();
-  matrix.clear();
-  matrix.setBrightness(100);
+  // matrix.clear();
+  matrix.setBrightness(255);
   matrix.show();
-  sceneStruct sceneConfig[sceneCount] = {
-    {0,  20,   0b001000},
-    {23, 31,   0b110000, {}, 3, {}, {}, 2, {0, 4}, {29, 4}},
+  sceneStruct sceneConfig[SCENECOUNT] = {
+    {0,  20,   0b0010000},
+    {23, 31,   0b1100000, {}, 3, {}, {}, 2, {0, 4}, {29, 4}},
 
-    {34, 49,   0b000001, {{0, 0, 0}, {255, 0, 0}}},
-    {52, 57,   0b010001, {{0, 0, 0}, {255, 0, 0}}, 3, {14, 4, 1}, {255, 50, 0}},
+    {34, 49,   0b0000010, {{0, 0, 0}, {255, 0, 0}, {}}},
+    {52, 57,   0b0100010, {{0, 0, 0}, {255, 0, 0}, {}}, 3, {14, 4, 1}, {255, 50, 0}},
 
-    {60, 62,   0b010010, {},3},
-    {65, 69,   0b010010, {}, 3},
-    {72, 75,   0b010010, {}, 3, {14, 4, 1}, {255, 255, 0}},
+    {60, 62,   0b0100100, {},3},
+    {65, 69,   0b0100100, {}, 3},
+    {72, 75,   0b0100100, {}, 3, {14, 4, 1}, {255, 255, 0}},
 
-    {78, 101,  0b000000},
-    {104, 120, 0b010010, {}, 3}
+    {78, 101,  0b0000001, {{255, 0, 0}, {0, 0, 0}, {255, 0, 0}}},
+    {104, 120, 0b0100100, {}, 3}
   };                                                                                                                                                                                                               
   scenes.init(sceneConfig);
+  // scenes.rainbowText();
+  // matrix.show();
 
   ////// AUDIO MODEL SETUP //////
   // Serial.begin(115200);
