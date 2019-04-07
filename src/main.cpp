@@ -10,6 +10,10 @@
 #define MATRIXPIN 10
 #define SCENECOUNT 9
 
+// Define Sensors Parameters
+#define ECHOPIN 4
+#define TRIGPIN 5
+
 // Matrix initialization with AdaFruit NeoMatrix
 Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, MATRIXPIN, 
   NEO_MATRIX_TOP + NEO_MATRIX_LEFT +
@@ -171,6 +175,16 @@ class sceneClass {
     }
   }
 
+  // Function for check distance from UltraSonic
+  bool checkDist() {
+    digitalWrite(TRIGPIN,1);
+    delayMicroseconds(10);
+    digitalWrite(TRIGPIN,0);
+    
+    int distance = pulseIn(ECHOPIN, 1, 3000) / 58;
+    return distance > 0;
+  }
+
   // MAIN CODE===============
   public:
   // Initializate scene structures
@@ -215,6 +229,7 @@ class sceneClass {
 
     Serial.print("Update:\t");
     Serial.println(id);
+    // if (checkDist()) {
     if (long(millis() - scenes[id].endTime) > 0) {
       id++;
       matrix.clear();
@@ -260,6 +275,9 @@ void setup() {
   // Serial.begin(115200);
   // player.volume(10);
   // player.play();
+  ///// SENSORS SETUP /////
+  pinMode(ECHOPIN, INPUT);
+  pinMode(TRIGPIN, OUTPUT);
 }
 
 void loop() {
