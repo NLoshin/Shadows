@@ -6,10 +6,14 @@
 #define SCENECOUNT 9
 
 
+// Define PWM parameters
 #define SERVOCOUNT 3
 #define Y 1
+const byte SERVOPINS[3] {0, 1, 2};
+const byte RGBPINS[3][4] {{4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15}};
 
 #define angleCoef 23 // 4096 / 180
+#define colorCoef 41 // 4096 / 100
 
 // Servo motors initialization with Adafruit PWM library
 Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver();
@@ -72,12 +76,19 @@ class sceneClass {
     // TODO: Circuit function
   }
 
+  // Function for color dioids
+  void colorDiods(Adafruit_PWMServoDriver pwm, byte colors[3]) {
+    for (uint8_t color=0; color < 3; color++) {
+      for (uint8_t pin=0; pin < sizeof(RGBPINS[color]); pin++) {
+        pwm.setPWM(RGBPINS[color][pin], 0, colors[color]);
       }
     }
   }
 
   // Function for move servos
   void updateServos(sceneStruct scene) {
+    for (int i=0; i < SERVOCOUNT; i++) {
+      colorDiods(servos[i].pwm, scenes[i].color);
     }
   }
 
