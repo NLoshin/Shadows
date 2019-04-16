@@ -1,8 +1,7 @@
-// Include librariesя
+// Include libraries
 #include <Arduino.h>
-#include "SPI.h"
-#include "Adafruit_NeoMatrix.h"
-#include "DFRobotDFPlayerMini.h"
+#include "Adafruit_NeoPixel.h"
+#include "Adafruit_PWMServoDriver.h"
 
 // Define Matrix Parameters
 #define W 30
@@ -14,15 +13,9 @@
 #define ECHOPIN 4
 #define TRIGPIN 5
 
-// Matrix initialization with AdaFruit NeoMatrix
-Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(W, H, MATRIXPIN, 
-  NEO_MATRIX_TOP + NEO_MATRIX_LEFT +
-  NEO_MATRIX_ROWS + NEO_MATRIX_PROGRESSIVE,
-  NEO_GRB + NEO_KHZ800);
 
-// Audio Player initialization with DFRobotPlayer
-// DFRobotDFPlayerMini player;
-// SoftwareSerial mySerial(4, 5); //RX, TX
+// Servo motors initialization with Adafruit PWM library
+Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver();
 
 // Structure for position variables
 struct position {uint8_t x; uint8_t y;};
