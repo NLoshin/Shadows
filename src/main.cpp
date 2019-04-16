@@ -15,9 +15,6 @@ const byte RGBPINS[3][4] {{4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15}};
 #define angleCoef 23 // 4096 / 180
 #define colorCoef 41 // 4096 / 100
 
-// Servo motors initialization with Adafruit PWM library
-Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver();
-
 // Structure for position variables
 struct position {byte x; byte y;};
 
@@ -166,15 +163,6 @@ void setup() {
     {104, 120, 0b10}
   };                                                                                                                                                                                                               
   scenes.init(sceneStructs, servoStructs);
-
-  ///// SERVOS SETUP /////
-  servo.begin();
-  servo.setPWMFreq(60);
-  delay(500);
-
-  ///// ENGINES SETUP /////
-  pinMode(ENGINE1, OUTPUT);
-  pinMode(ENGINE2, OUTPUT);
 }
 
 void loop() {
