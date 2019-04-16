@@ -17,6 +17,10 @@ const byte RGBPINS[3][4] {{4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15}};
 
 // Servo motors initialization with Adafruit PWM library
 Adafruit_PWMServoDriver servo = Adafruit_PWMServoDriver();
+/*
+#define LAMPS_COUNT 2
+Adafruit_PWMServoDriver lamps[LAMPS_COUNT] = {Adafruit_PWMServoDriver(),Adafruit_PWMServoDriver(0x41)};
+*/
 
 // Structure for position variables
 struct position {byte x; byte y;};
