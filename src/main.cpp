@@ -107,10 +107,7 @@ class sceneClass {
       Serial.print('\t');
       Serial.println(colorCoef*colors[color]);
       for (byte pin=4; pin < 8; pin++) {
-        pwm.setPWM(4+4*color, 0, colorCoef*colors[color]); 
-        pwm.setPWM(5+4*color, 0, colorCoef*colors[color]); 
-        pwm.setPWM(6+4*color, 0, colorCoef*colors[color]);
-        pwm.setPWM(7+4*color, 0, colorCoef*colors[color]);
+        pwm.setPWM(pin+4*color, 0, colorCoef*colors[color]);
       }
     }
   }
