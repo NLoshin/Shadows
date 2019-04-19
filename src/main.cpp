@@ -102,9 +102,15 @@ class sceneClass {
 
   // Function for color dioids
   void colorDiods(Adafruit_PWMServoDriver pwm, byte colors[3]) {
-    for (uint8_t color=0; color < 3; color++) {
-      for (uint8_t pin=0; pin < sizeof(RGBPINS[color]); pin++) {
-        pwm.setPWM(RGBPINS[color][pin], 0, colors[color]);
+    for (byte color=0; color < 3; color++) {
+      Serial.print(4+4*color);
+      Serial.print('\t');
+      Serial.println(colorCoef*colors[color]);
+      for (byte pin=4; pin < 8; pin++) {
+        pwm.setPWM(4+4*color, 0, colorCoef*colors[color]); 
+        pwm.setPWM(5+4*color, 0, colorCoef*colors[color]); 
+        pwm.setPWM(6+4*color, 0, colorCoef*colors[color]);
+        pwm.setPWM(7+4*color, 0, colorCoef*colors[color]);
       }
     }
   }
