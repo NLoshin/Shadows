@@ -5,6 +5,12 @@
 
 #define SCENECOUNT 9
 
+// for Motor
+#define MOTORSPEED 2000                                           	// время разгона и торможения в мс
+volatile uint8_t motorState[2];                                   	// 0 - off, 1 - start, 2 - go, 3 - stop
+uint8_t motorSpeed[2];
+uint32_t motorLastTime[2];
+uint8_t pinMotor[2];
 
 // Define PWM parameters
 #define SERVOCOUNT 2
@@ -141,7 +147,28 @@ void update() {
 /////////////////////////////////////////////
 /////////////////////////////////////////////
 /////////////////////////////////////////////
+void motorUpdate0() {motorState[0] = 3;}                       		// функция обработчик прерывания 0 (второй пин)
+void motorUpdate1() {motorState[1] = 3;} 							// функция обработчик прерывания 1 (третий пин)
 
+void checkMotor() {
+  for (int i = 0; i < 2; i++) {
+    if ( motorState[i] == 0 || motorState[i] == 2 ) ;               // ничего не делать, если выкл, если едет, читаем датчики ( работает прерывание )
+    else if ( millis() - motorLastTime[i] > MOTORSPEED / 255 ) {    // периодически изменяем скорость
+      motorState[i] == 1 ? motorSpeed[i]++ : motorSpeed[i]--;
+      motorLastTime[i] = millis();
+      analogWrite(pinMotor[i], motorSpeed[i]);
+      if ( motorSpeed[i] == 255 ) {                             	// активация прерывания
+        if ( i == 0 ) attachInterrupt(i, motorUpdate0, FALLING);
+        else  attachInterrupt(i, motorUpdate1, FALLING);
+        motorState[i] = 2;
+      }
+      else if ( motorSpeed[i] == 0 ) {
+        detachInterrupt(i);                                   		// отключение прерывания
+        motorState[i] = 0;
+      }
+    }
+  }
+}
 //=======================================================
 //====================== MAIN CODE ======================
 //=======================================================
