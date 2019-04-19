@@ -7,10 +7,10 @@
 
 
 // Define PWM parameters
-#define SERVOCOUNT 4
+#define SERVOCOUNT 2
+Adafruit_PWMServoDriver pwms[SERVOCOUNT] = {Adafruit_PWMServoDriver(), Adafruit_PWMServoDriver(0x41)};
 #define Y 1
 
-#define angleCoef 4096 / 180
 #define colorCoef 4096 / 100
 
 // Structure for position variables
@@ -20,12 +20,11 @@ struct position {byte x; byte y;};
 struct servoStruct {
   position SAFEZONES[3];
   // Automatic variables 
-  Adafruit_PWMServoDriver pwm;
   uint16_t length[3];
 };
 
 // Structure for scenes
-struct sceneStruct {
+struct scenestruct {
   unsigned long startTime;
   unsigned long endTime;
   byte protect;
@@ -36,148 +35,130 @@ struct sceneStruct {
   byte noiseCount;
   // Automatic variables
   unsigned long time;
-  float coefX;
-  float coefZ;
-  float coefNoise;
-  float coefPixels;
 };
 
-// Class for show scenes
-class sceneClass {
-  private:
-  // PRIVATE VARIABLES=======
-  byte id = 0;
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+// Scene ID
+byte id = 0;
 
-  const long shadowsText[10] = {
-    0b111101001001100110001111010001,
-    0b100001001010010101001001010001,
-    0b100001001010010100101001010001,
-    0b100001001010010100101001010101,
-    0b111101111011110100101001010101,
-    0b111101111011110100101001010101,
-    0b000101001010010100101001010101,
-    0b000101001010010100101001010101,
-    0b000101001010010101001001010101,
-    0b111101001010010110001111011111
-  };
-
-  void initScenes(sceneStruct sceneStructs[SCENECOUNT]) {
-    for(int i=0; i<SCENECOUNT; i++) {
-      scenes[i] = sceneStructs[i];
-      if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
-      if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
-      unsigned int time = millis(); 
-      scenes[i].startTime = scenes[i].startTime + time;
-      scenes[i].endTime   = scenes[i].endTime   + time;
-      scenes[i].time = scenes[i].endTime - scenes[i].startTime;
-      scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
-      scenes[i].coefZ = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
-    }
-  }
-
-  void initServos(servoStruct servoStructs[SERVOCOUNT]) {
-    for (int i=0; i < SERVOCOUNT; i++) {
-      servos[i] = servoStructs[i];
-      // INIT PWM
-      servos[i].pwm = Adafruit_PWMServoDriver(0x40+i);
-      servos[i].pwm.begin();  
-      servos[i].pwm.setPWMFreq(60);
-
-      // INIT VARIABLES
-      for (byte j; j < 3; j++) {
-        servos[i].length[j] = abs(servos[i].SAFEZONES[j].x - servos[i].SAFEZONES[j].y);
-      }
-    }
-  }
-
-  // Function for display the storm
-  void storm(sceneStruct scene) { 
-    // TODO: Storm function
-  }
-  
-  // Function for circuit frame
-  void circuit(sceneStruct scene) {
-    // TODO: Circuit function
-  }
-
-  // Function for color dioids
-  void colorDiods(Adafruit_PWMServoDriver pwm, byte colors[3]) {
-    for (byte color=0; color < 3; color++) {
-      Serial.print(4+4*color);
-      Serial.print('\t');
-      Serial.println(colorCoef*colors[color]);
-      for (byte pin=4; pin < 8; pin++) {
-        pwm.setPWM(pin+4*color, 0, colorCoef*colors[color]);
-      }
-    }
-  }
-
-  // Function for move servos
-  void updateServos(sceneStruct scene) {
-    for (int i=0; i < SERVOCOUNT; i++) {
-      colorDiods(servos[i].pwm, scenes[i].color);
-    }
-  }
-
-  // MAIN CODE===============
-  public:
-  sceneStruct scenes[SCENECOUNT];
-  servoStruct servos[SERVOCOUNT];
-  
-  // Initializate scene structures
-  void init(sceneStruct sceneStructs[SCENECOUNT], servoStruct servoStructs[SERVOCOUNT]) {
-    initScenes(sceneStructs);
-    initServos(servoStructs);
-  }
-
-  // Function for update matrix
-  void update() {
-    if bitRead(scenes[id].protect, 0) storm(scenes[id]);
-    // if bitRead(scenes[id].protect, 3) updateServos(scenes[id]);
-    
-    Serial.print("Update:\t");
-    Serial.println(id);
-
-    if (false) { // Book signal
-      id++;
-      // player.next();
-    }
-  }
+// Servo structs
+servoStruct servos[SERVOCOUNT] {
+  {}
 };
+
+// Scene structs
+scenestruct scenes[SCENECOUNT] = {
+  {0,   20, 0b10, {}, {}, 0, {100, 0, 0}},
+  {23,  31, 0b10, {}, {}, 0, {0, 100, 0}},
+
+  {34,  49, 0b10, {}, {}, 0, {0, 0, 100}},
+  {52,  57, 0b10, {}, {}, 0, {100, 100, 0}},
+
+  {60,  62, 0b10, {}, {}, 0, {100, 0, 100}},
+  {65,  69, 0b10, {}, {}, 0, {0, 100, 100}},
+  {72,  75, 0b10, {}, {}, 0, {100, 100, 100}},
+
+  {78,  101, 0b10},
+  {104, 120, 0b10}
+};
+
+// Initializate scene structures
+void initStructs() {
+  // Init servos
+  for (int servo=0; servo < SERVOCOUNT; servo++) {
+    // INIT PWM
+    pwms[servo].begin();
+    pwms[servo].setPWMFreq(50);
+    Serial.println("Lets servooos");   
+
+    // INIT VARIABLES
+    for (byte j; j < 3; j++) {
+      servos[servo].length[j] = abs(servos[servo].SAFEZONES[j].x - servos[servo].SAFEZONES[j].y);
+    }
+    delay(100);
+  }
+
+  // Init scenes
+  unsigned int time = millis();
+  for(int scene=0; scene<SCENECOUNT; scene++) {
+    if (scenes[scene].startTime < 1000) scenes[scene].startTime *= 1000;
+    if (scenes[scene].endTime   < 1000) scenes[scene].endTime   *= 1000;
+    scenes[scene].startTime = scenes[scene].startTime + time;
+    scenes[scene].endTime   = scenes[scene].endTime   + time;
+    scenes[scene].time = scenes[scene].endTime - scenes[scene].startTime;
+  }
+}
+
+// Function for display the storm
+void storm(scenestruct scene) { 
+  // TODO: Storm function
+}
+
+// Function for circuit frame
+void circuit(scenestruct scene) {
+  // TODO: Circuit function
+}
+
+// Function for color dioids
+void colorDiods(byte id) {
+  for (byte color=0; color < 3; color++) {
+    Serial.print("Color");
+    Serial.print('\t');
+    Serial.println(colorCoef*scenes[id].color[color]);
+    for (byte pin=4; pin < 8; pin++) {
+      pwms[id].setPWM(pin+color*4, 0, scenes[id].color[color]);
+    }
+  }
+}
+
+// Function for move servos
+void updateServos(scenestruct scene) {
+  for (int servo=0; servo < SERVOCOUNT; servo++) {
+    Serial.print("Servo");
+    Serial.print('\t');
+    Serial.println(servo);
+    colorDiods(servo);
+  }
+}
+
+// MAIN CODE===============
+// Function for update matrix
+void update() {
+  Serial.print("Update:\t");
+  Serial.println(id);
+
+  if bitRead(scenes[id].protect, 0) storm(scenes[id]);
+  if bitRead(scenes[id].protect, 1) updateServos(scenes[id]);
+
+  if (!digitalRead(3)) { // Book signal
+    id++;
+    delay(3000);
+    // player.next();
+  }
+}
+/////////////////////////////////////////////
+/////////////////////////////////////////////
+/////////////////////////////////////////////
 
 //=======================================================
 //====================== MAIN CODE ======================
 //=======================================================
-
-sceneClass scenes;
 void setup() {
-  delay(5000);
+  delay(3000);
+  pinMode(3, INPUT_PULLUP);
   Serial.begin(9600);
-  ////// CLASS SETUP //////
-  servoStruct servoStructs[SERVOCOUNT] {
-    {},
-    {},
-    {},
-    {}
-  };
-
-  sceneStruct sceneStructs[SCENECOUNT] = {
-    {0,   20, 0b10, {}, {}, 0, {100, 0, 0}},
-    {23,  31, 0b10, {}, {}, 0, {0, 100, 0}},
-
-    {34,  49, 0b10, {}, {}, 0, {0, 0, 100}},
-    {52,  57, 0b10, {}, {}, 0, {100, 100, 0}},
-
-    {60,  62, 0b10, {}, {}, 0, {100, 0, 100}},
-    {65,  69, 0b10, {}, {}, 0, {0, 100, 100}},
-    {72,  75, 0b10, {}, {}, 0, {100, 100, 100}},
-
-    {78,  101, 0b10},
-    {104, 120, 0b10}
-  };                                                                                                                                                                                                               
-  scenes.init(sceneStructs, servoStructs);
+  Serial.println("Lets go");
+  ////// CLASS SETUP //////                                                                                                                                                                                                       
+  initStructs();
+  int time = millis();
+  while (true) {
+    Serial.println(round((millis() - time)/100));
+    if (millis() - time > 1000) break;
+  }
 }
 
 void loop() {
-  scenes.update();
+  update();
 }
