@@ -7,23 +7,21 @@
 
 
 // Define PWM parameters
-#define SERVOCOUNT 3
+#define SERVOCOUNT 4
 #define Y 1
-const byte SERVOPINS[3] {0, 1, 2};
-const byte RGBPINS[3][4] {{4, 5, 6, 7}, {8, 9, 10, 11}, {12, 13, 14, 15}};
 
-#define angleCoef 23 // 4096 / 180
-#define colorCoef 41 // 4096 / 100
+#define angleCoef 4096 / 180
+#define colorCoef 4096 / 100
 
 // Structure for position variables
 struct position {byte x; byte y;};
 
 // Structure for servos
 struct servoStruct {
-  byte pwmPin;
-  int SAFEZONES[3][2];
+  position SAFEZONES[3];
   // Automatic variables 
   Adafruit_PWMServoDriver pwm;
+  uint16_t length[3];
 };
 
 // Structure for scenes
@@ -63,6 +61,35 @@ class sceneClass {
     0b111101001010010110001111011111
   };
 
+  void initScenes(sceneStruct sceneStructs[SCENECOUNT]) {
+    for(int i=0; i<SCENECOUNT; i++) {
+      scenes[i] = sceneStructs[i];
+      if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
+      if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
+      unsigned int time = millis(); 
+      scenes[i].startTime = scenes[i].startTime + time;
+      scenes[i].endTime   = scenes[i].endTime   + time;
+      scenes[i].time = scenes[i].endTime - scenes[i].startTime;
+      scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
+      scenes[i].coefZ = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
+    }
+  }
+
+  void initServos(servoStruct servoStructs[SERVOCOUNT]) {
+    for (int i=0; i < SERVOCOUNT; i++) {
+      servos[i] = servoStructs[i];
+      // INIT PWM
+      servos[i].pwm = Adafruit_PWMServoDriver(0x40+i);
+      servos[i].pwm.begin();  
+      servos[i].pwm.setPWMFreq(60);
+
+      // INIT VARIABLES
+      for (byte j; j < 3; j++) {
+        servos[i].length[j] = abs(servos[i].SAFEZONES[j].x - servos[i].SAFEZONES[j].y);
+      }
+    }
+  }
+
   // Function for display the storm
   void storm(sceneStruct scene) { 
     // TODO: Storm function
@@ -93,30 +120,11 @@ class sceneClass {
   public:
   sceneStruct scenes[SCENECOUNT];
   servoStruct servos[SERVOCOUNT];
+  
   // Initializate scene structures
   void init(sceneStruct sceneStructs[SCENECOUNT], servoStruct servoStructs[SERVOCOUNT]) {
-    for(int i=0; i<SCENECOUNT; i++) {
-      scenes[i] = sceneStructs[i];
-      if (scenes[i].startTime < 1000) scenes[i].startTime *= 1000;
-      if (scenes[i].endTime   < 1000) scenes[i].endTime   *= 1000;
-      unsigned int time = millis(); 
-      scenes[i].startTime = scenes[i].startTime + time;
-      scenes[i].endTime   = scenes[i].endTime   + time;
-      scenes[i].time = scenes[i].endTime - scenes[i].startTime;
-      scenes[i].coefX = 1.0 * (scenes[i].end.x - scenes[i].start.x) / scenes[i].time;
-      scenes[i].coefZ = 1.0 * (scenes[i].end.y - scenes[i].start.y) / scenes[i].time;
-    }
-    for (int i=0; i < SERVOCOUNT; i++) {
-      servos[i] = servoStructs[i];
-      servos[i].pwm = Adafruit_PWMServoDriver(servos[i].pwmPin);
-      servos[i].pwm.begin();
-      servos[i].pwm.setPWMFreq(60);
-      for (int j=0; j < sizeof(servos[i].SAFEZONES); j++) {
-        for (int l=0; l < 2; l++) {
-          servos[i].SAFEZONES[j][l] = servos[i].SAFEZONES[j][l] * angleCoef; 
-        }
-      }
-    }
+    initScenes(sceneStructs);
+    initServos(servoStructs);
   }
 
   // Function for update matrix
@@ -144,20 +152,22 @@ void setup() {
   Serial.begin(9600);
   ////// CLASS SETUP //////
   servoStruct servoStructs[SERVOCOUNT] {
-    {0x40},
-    {0x41},
-    {0x42}};
+    {},
+    {},
+    {},
+    {}
+  };
 
   sceneStruct sceneStructs[SCENECOUNT] = {
-    {0,   20, 0b10},
-    {23,  31, 0b10},
+    {0,   20, 0b10, {}, {}, 0, {100, 0, 0}},
+    {23,  31, 0b10, {}, {}, 0, {0, 100, 0}},
 
-    {34,  49, 0b10},
-    {52,  57, 0b10},
+    {34,  49, 0b10, {}, {}, 0, {0, 0, 100}},
+    {52,  57, 0b10, {}, {}, 0, {100, 100, 0}},
 
-    {60,  62, 0b10},
-    {65,  69, 0b10},
-    {72,  75, 0b10},
+    {60,  62, 0b10, {}, {}, 0, {100, 0, 100}},
+    {65,  69, 0b10, {}, {}, 0, {0, 100, 100}},
+    {72,  75, 0b10, {}, {}, 0, {100, 100, 100}},
 
     {78,  101, 0b10},
     {104, 120, 0b10}
